@@ -1,0 +1,661 @@
+<!doctype html>
+<html lang="te">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>తెలుగు ట్రెండ్స్ - E-Paper</title>
+
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:#e8e8e8;color:#111}
+body{font-family:"Noto Sans Telugu","Nirmala UI",Arial,sans-serif}
+button{font-family:inherit}
+
+.tt-paper{
+  width:100%;
+  max-width:1180px;
+  margin:12px auto;
+  background:#fff;
+  box-shadow:0 1px 10px rgba(0,0,0,.12);
+}
+
+.tt-mast{
+  text-align:center;
+  padding:13px 16px 8px;
+  border-bottom:4px double #111;
+}
+.tt-brand{
+  font-size:52px;
+  font-weight:900;
+  line-height:1.05;
+  color:#111;
+}
+.tt-sub{
+  font-size:14px;
+  color:#444;
+  margin-top:3px;
+}
+.tt-meta{
+  display:flex;
+  justify-content:space-between;
+  gap:8px;
+  border-top:1px solid #111;
+  margin-top:7px;
+  padding-top:4px;
+  font-size:11px;
+}
+
+.tt-breaking{
+  display:flex;
+  margin:8px 12px 6px;
+  border:1px solid #111;
+  min-height:34px;
+}
+.tt-breaking b{
+  background:#111;
+  color:#fff;
+  padding:6px 11px;
+  white-space:nowrap;
+  font-size:13px;
+}
+.tt-breaking span{
+  padding:6px 10px;
+  font-size:13px;
+  font-weight:700;
+  overflow:hidden;
+  white-space:nowrap;
+}
+
+.tt-actions{
+  display:flex;
+  justify-content:flex-end;
+  gap:6px;
+  padding:0 12px 7px;
+}
+.tt-actions button{
+  border:1px solid #111;
+  background:#fff;
+  color:#111;
+  padding:5px 10px;
+  border-radius:3px;
+  font-size:13px;
+  cursor:pointer;
+}
+.tt-actions button:first-child{
+  background:#111;
+  color:#fff;
+}
+
+.tt-status{
+  text-align:center;
+  padding:55px 10px;
+  font-size:20px;
+  color:#555;
+}
+
+/* REAL NEWSPAPER FLOW */
+#ttNewsList{
+  padding:0 12px;
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  column-gap:12px;
+  align-items:start;
+}
+
+.tt-story{
+  min-width:0;
+  padding:8px 0 11px;
+  border-top:1px solid #222;
+  overflow:hidden;
+}
+
+.tt-story.lead{
+  grid-column:span 2;
+}
+
+.tt-story h2{
+  font-size:20px;
+  line-height:1.32;
+  margin:3px 0 6px;
+  font-weight:900;
+}
+.tt-story.lead h2{
+  font-size:29px;
+  line-height:1.25;
+}
+
+.tt-date{
+  font-size:10px;
+  color:#555;
+  margin-bottom:2px;
+}
+
+.tt-cover{
+  display:block;
+  width:100%;
+  height:170px;
+  object-fit:cover;
+  margin:4px 0 7px;
+}
+.tt-story.lead .tt-cover{
+  height:285px;
+}
+
+.tt-body{
+  font-size:13.5px;
+  line-height:1.65;
+  text-align:justify;
+}
+.tt-story.lead .tt-body{
+  font-size:15px;
+  line-height:1.72;
+}
+
+.tt-body p{
+  margin:0 0 7px;
+}
+.tt-body img{
+  max-width:100%;
+  height:auto;
+  display:block;
+  margin:7px auto;
+}
+.tt-body iframe,
+.tt-body video{
+  max-width:100%;
+}
+.tt-body table{
+  max-width:100%;
+  overflow:auto;
+}
+.tt-body a{
+  color:inherit;
+}
+
+.story-pdf{
+  display:inline-block;
+  margin-top:6px;
+  padding:4px 8px;
+  border:1px solid #333;
+  background:#fff;
+  color:#111;
+  border-radius:2px;
+  font-size:11px;
+  cursor:pointer;
+}
+
+.tt-section{
+  grid-column:1/-1;
+  border-top:4px double #111;
+  margin:5px 0 0;
+}
+
+.tt-more{
+  text-align:center;
+  padding:10px;
+}
+.tt-more button{
+  border:0;
+  background:#111;
+  color:#fff;
+  padding:7px 18px;
+  border-radius:3px;
+  font:inherit;
+  cursor:pointer;
+}
+
+.tt-foot{
+  border-top:4px double #111;
+  text-align:center;
+  padding:7px;
+  margin:0 12px 10px;
+  font-size:11px;
+  color:#555;
+}
+
+/* MOBILE */
+@media(max-width:760px){
+  .tt-paper{margin:0;box-shadow:none}
+  .tt-brand{font-size:39px}
+  .tt-sub{font-size:12px}
+  .tt-meta{font-size:9px}
+  #ttNewsList{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    column-gap:9px;
+    padding:0 9px;
+  }
+  .tt-story.lead{grid-column:span 2}
+  .tt-story h2{font-size:17px}
+  .tt-story.lead h2{font-size:24px}
+  .tt-cover{height:135px}
+  .tt-story.lead .tt-cover{height:220px}
+  .tt-body{font-size:12.5px;line-height:1.62}
+  .tt-story.lead .tt-body{font-size:13.5px}
+}
+
+@media(max-width:480px){
+  .tt-brand{font-size:34px}
+  .tt-sub{font-size:11px}
+  .tt-meta{font-size:8px}
+  .tt-breaking{margin:6px 6px 5px}
+  .tt-breaking b,.tt-breaking span{font-size:11px;padding:5px 7px}
+  .tt-actions{padding:0 6px 6px}
+  #ttNewsList{
+    grid-template-columns:1fr;
+    padding:0 7px;
+  }
+  .tt-story.lead{grid-column:auto}
+  .tt-story h2{font-size:19px}
+  .tt-story.lead h2{font-size:24px}
+  .tt-cover,.tt-story.lead .tt-cover{
+    height:auto;
+    max-height:260px;
+  }
+  .tt-body,.tt-story.lead .tt-body{
+    font-size:14px;
+    line-height:1.75;
+  }
+}
+
+/* PRINT / A4 NEWSPAPER */
+@media print{
+  @page{size:A4;margin:8mm}
+  html,body{background:#fff!important}
+  .tt-paper{
+    width:100%;
+    max-width:none;
+    margin:0;
+    box-shadow:none;
+  }
+  .tt-actions,.story-pdf,.tt-more{display:none!important}
+  .tt-mast{padding:5mm 3mm 3mm}
+  .tt-brand{font-size:30pt}
+  .tt-sub{font-size:9pt}
+  .tt-meta{font-size:7.5pt}
+  .tt-breaking{margin:3mm 0 2mm}
+  .tt-breaking b,.tt-breaking span{font-size:8.5pt;padding:1.7mm 2.2mm}
+  #ttNewsList{
+    display:grid!important;
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    column-gap:4mm;
+    padding:0;
+    align-items:start;
+  }
+  .tt-story{
+    padding:2.5mm 0 3mm;
+    border-top:1px solid #222;
+    break-inside:avoid;
+    page-break-inside:avoid;
+  }
+  .tt-story.lead{grid-column:span 2}
+  .tt-story h2{
+    font-size:11.5pt;
+    line-height:1.25;
+    margin:1mm 0 1.5mm;
+  }
+  .tt-story.lead h2{font-size:18pt}
+  .tt-date{font-size:6.5pt}
+  .tt-cover{
+    height:43mm;
+    object-fit:cover;
+    margin:1mm 0 1.5mm;
+  }
+  .tt-story.lead .tt-cover{height:67mm}
+  .tt-body{
+    font-size:8.2pt;
+    line-height:1.48;
+  }
+  .tt-story.lead .tt-body{
+    font-size:9pt;
+    line-height:1.55;
+  }
+  .tt-body p{margin:0 0 1.6mm}
+  .tt-body img{margin:1.5mm auto}
+  .tt-section{margin:2mm 0 0}
+  .tt-foot{margin:3mm 0 0;padding:2mm;font-size:7pt}
+}
+</style>
+</head>
+
+<body>
+<div class="tt-paper" id="ttPaper">
+
+<header class="tt-mast">
+  <div class="tt-brand">తెలుగు ట్రెండ్స్</div>
+  <div class="tt-sub">తెలంగాణ • ఆంధ్రప్రదేశ్ • దేశం • ప్రపంచం</div>
+  <div class="tt-meta">
+    <span id="ttDate"></span>
+    <span>తెలుగు ట్రెండ్స్ E-Paper</span>
+    <span>తాజా వార్తలు</span>
+  </div>
+</header>
+
+<div class="tt-breaking">
+  <b>బ్రేకింగ్ న్యూస్</b>
+  <span id="ttBreakingText">తాజా వార్తలు లోడ్ అవుతున్నాయి...</span>
+</div>
+
+<div class="tt-actions">
+  <button onclick="TTPrintAll()">🖨️ మొత్తం E-Paper PDF</button>
+  <button onclick="location.reload()">↻ Refresh</button>
+</div>
+
+<main id="ttNewsList">
+  <div class="tt-status">వార్తలు లోడ్ అవుతున్నాయి...</div>
+</main>
+
+<div class="tt-more" id="ttMoreBox" style="display:none">
+  <button id="ttMoreBtn" onclick="TTLoadMore()">మరిన్ని వార్తలు</button>
+</div>
+
+<footer class="tt-foot">తెలుగు ట్రెండ్స్ • తాజా వార్తలు</footer>
+</div>
+
+<script>
+(function(){
+
+var TT={
+  start:1,
+  batch:12,
+  loading:false,
+  finished:false,
+  stories:[]
+};
+
+function esc(v){
+  return String(v==null?"":v)
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#39;");
+}
+
+/* Convert any numeric/HTML entities inside Blogger text to real Telugu */
+function decodeText(v){
+  var box=document.createElement("textarea");
+  box.innerHTML=String(v==null?"":v);
+  return box.value;
+}
+
+function getTitle(e){
+  var v=e&&e.title&&e.title.$t?e.title.$t:"వార్త";
+  return decodeText(v);
+}
+
+function getContent(e){
+  if(e&&e.content&&e.content.$t)return e.content.$t;
+  if(e&&e.summary&&e.summary.$t)return e.summary.$t;
+  return "";
+}
+
+function getDate(e){
+  var raw=e&&e.published&&e.published.$t?e.published.$t:"";
+  if(!raw)return "";
+  var d=new Date(raw);
+  return d.toLocaleDateString("te-IN",{
+    day:"2-digit",
+    month:"long",
+    year:"numeric"
+  });
+}
+
+function getImage(html){
+  var box=document.createElement("div");
+  box.innerHTML=html||"";
+  var img=box.querySelector("img");
+  return img?img.getAttribute("src"):"";
+}
+
+function getBody(html){
+  var box=document.createElement("div");
+  box.innerHTML=html||"";
+
+  box.querySelectorAll("script,style,form,noscript").forEach(function(n){
+    n.remove();
+  });
+
+  /* Remove only the first image because it is displayed as the article photo */
+  var first=box.querySelector("img");
+  if(first)first.remove();
+
+  /* Remove Blogger share/read-more clutter if present */
+  box.querySelectorAll(".separator,.blogger-post-footer").forEach(function(n){
+    if(n.classList && n.classList.contains("blogger-post-footer"))n.remove();
+  });
+
+  return box.innerHTML ||
+    "<p>వార్త వివరాలు అందుబాటులో లేవు.</p>";
+}
+
+function makeStory(e,index){
+  var item={
+    title:getTitle(e),
+    date:getDate(e),
+    image:getImage(getContent(e)),
+    body:getBody(getContent(e))
+  };
+
+  TT.stories.push(item);
+
+  var a=document.createElement("article");
+  a.className="tt-story"+(index===0?" lead":"");
+
+  var h="";
+  h+='<div class="tt-date">'+esc(item.date)+'</div>';
+  h+='<h2>'+esc(item.title)+'</h2>';
+
+  if(item.image){
+    h+='<img class="tt-cover" src="'+esc(item.image)+'" alt="">';
+  }
+
+  h+='<div class="tt-body">'+item.body+'</div>';
+
+  h+='<button class="story-pdf" onclick="TTPrintStory('+index+')">🖨️ ఈ వార్త PDF</button>';
+
+  a.innerHTML=h;
+  return a;
+}
+
+function render(entries){
+
+  var list=document.getElementById("ttNewsList");
+
+  if(!list)return;
+
+  if(!entries||!entries.length){
+
+    if(!TT.stories.length){
+      list.innerHTML='<div class="tt-status">వార్తలు అందుబాటులో లేవు.</div>';
+    }
+
+    TT.finished=true;
+    document.getElementById("ttMoreBox").style.display="none";
+    return;
+  }
+
+  if(TT.start===1){
+    document.getElementById("ttBreakingText").textContent=getTitle(entries[0]);
+  }
+
+  entries.forEach(function(e){
+    list.appendChild(makeStory(e,TT.stories.length));
+  });
+
+  TT.loading=false;
+
+  if(entries.length<TT.batch){
+    TT.finished=true;
+    document.getElementById("ttMoreBox").style.display="none";
+  }else{
+    document.getElementById("ttMoreBox").style.display="block";
+    document.getElementById("ttMoreBtn").textContent="మరిన్ని వార్తలు";
+  }
+}
+
+function showError(){
+
+  var list=document.getElementById("ttNewsList");
+
+  if(list&&!TT.stories.length){
+    list.innerHTML=
+      '<div class="tt-status">వార్తలు లోడ్ కాలేదు. Refresh చేయండి.</div>';
+  }
+
+  TT.loading=false;
+}
+
+function load(){
+
+  if(TT.loading||TT.finished)return;
+
+  TT.loading=true;
+
+  var url=
+    "/feeds/posts/default"+
+    "?alt=json-in-script"+
+    "&max-results="+TT.batch+
+    "&start-index="+TT.start;
+
+  $.ajax({
+    type:"GET",
+    url:url,
+    cache:false,
+    dataType:"jsonp",
+    success:function(data){
+      if(!data||!data.feed){
+        showError();
+        return;
+      }
+      render(data.feed.entry||[]);
+    },
+    error:function(){
+      showError();
+    }
+  });
+}
+
+window.TTLoadMore=function(){
+  if(TT.loading||TT.finished)return;
+  TT.start+=TT.batch;
+  load();
+};
+
+/* Build a clean newspaper PDF containing ALL loaded stories together */
+function printAllDocument(items,heading){
+
+  var w=window.open("","_blank");
+
+  if(!w){
+    alert("Print windowను అనుమతించండి.");
+    return;
+  }
+
+  var today=new Date().toLocaleDateString("te-IN",{
+    day:"2-digit",
+    month:"long",
+    year:"numeric"
+  });
+
+  var out=
+'<!doctype html><html lang="te"><head><meta charset="utf-8">'+
+'<title>'+esc(heading)+'</title>'+
+'<style>'+
+'@page{size:A4;margin:7mm}'+
+'*{box-sizing:border-box}'+
+'html,body{margin:0;padding:0;background:#fff;color:#111}'+
+'body{font-family:"Noto Sans Telugu","Nirmala UI",Arial,sans-serif}'+
+'.paper{width:100%}'+
+'.mast{text-align:center;padding:2mm 0 2mm;border-bottom:4px double #111}'+
+'.brand{font-size:29pt;font-weight:900;line-height:1.05}'+
+'.sub{font-size:8.5pt;color:#444;margin-top:1mm}'+
+'.meta{display:flex;justify-content:space-between;border-top:1px solid #111;margin-top:2mm;padding-top:1mm;font-size:7pt}'+
+'.breaking{display:flex;border:1px solid #111;margin:2mm 0}'+
+'.breaking b{background:#111;color:#fff;padding:1.5mm 2mm;font-size:8pt;white-space:nowrap}'+
+'.breaking span{padding:1.5mm 2mm;font-size:8pt;font-weight:bold}'+
+'.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 4mm;align-items:start}'+
+'.story{min-width:0;padding:2.3mm 0 2.8mm;border-top:1px solid #222;break-inside:avoid;page-break-inside:avoid}'+
+'.story.lead{grid-column:span 2}'+
+'.story h2{font-size:11pt;line-height:1.27;margin:1mm 0 1.5mm;font-weight:900}'+
+'.story.lead h2{font-size:17pt;line-height:1.22}'+
+'.date{font-size:6.3pt;color:#555}'+
+'.cover{display:block;width:100%;height:42mm;object-fit:cover;margin:1mm 0 1.5mm}'+
+'.story.lead .cover{height:63mm}'+
+'.body{font-size:8pt;line-height:1.5;text-align:justify}'+
+'.story.lead .body{font-size:8.8pt;line-height:1.56}'+
+'.body p{margin:0 0 1.5mm}'+
+'.body img{max-width:100%;height:auto;display:block;margin:1.5mm auto}'+
+'.body iframe,.body video{max-width:100%}'+
+'.foot{border-top:4px double #111;text-align:center;padding-top:1.5mm;margin-top:2mm;font-size:7pt;color:#555}'+
+'</style></head><body><div class="paper">'+
+'<div class="mast"><div class="brand">తెలుగు ట్రెండ్స్</div>'+
+'<div class="sub">తెలంగాణ • ఆంధ్రప్రదేశ్ • దేశం • ప్రపంచం</div>'+
+'<div class="meta"><span>'+esc(today)+'</span>'+
+'<span>తెలుగు ట్రెండ్స్ E-Paper</span><span>తాజా వార్తలు</span></div></div>'+
+'<div class="breaking"><b>బ్రేకింగ్ న్యూస్</b><span>'+
+esc(items[0]?items[0].title:"తెలుగు ట్రెండ్స్ తాజా వార్తలు")+
+'</span></div><div class="grid">';
+
+items.forEach(function(x,i){
+
+  out+=
+    '<article class="story '+(i===0?"lead":"")+'">'+
+    '<div class="date">'+esc(x.date)+'</div>'+
+    '<h2>'+esc(x.title)+'</h2>'+
+    (x.image?'<img class="cover" src="'+esc(x.image)+'">':"")+
+    '<div class="body">'+x.body+'</div>'+
+    '</article>';
+});
+
+out+=
+'</div><div class="foot">తెలుగు ట్రెండ్స్ • E-Paper</div></div>'+
+'<script>window.onload=function(){setTimeout(function(){window.print()},900)}<\/script>'+
+'</body></html>';
+
+  w.document.open();
+  w.document.write(out);
+  w.document.close();
+}
+
+window.TTPrintAll=function(){
+
+  if(!TT.stories.length){
+    alert("వార్తలు ఇంకా లోడ్ కాలేదు.");
+    return;
+  }
+
+  printAllDocument(TT.stories,"తెలుగు ట్రెండ్స్ E-Paper");
+};
+
+window.TTPrintStory=function(i){
+
+  if(!TT.stories[i])return;
+
+  printAllDocument([TT.stories[i]],"తెలుగు ట్రెండ్స్ - వార్త");
+};
+
+function start(){
+
+  if(window.jQuery){
+    load();
+  }else{
+    setTimeout(start,100);
+  }
+}
+
+var d=new Date();
+
+document.getElementById("ttDate").textContent=
+  d.toLocaleDateString("te-IN",{
+    weekday:"long",
+    day:"2-digit",
+    month:"long",
+    year:"numeric"
+  });
+
+start();
+
+})();
+</script>
+</body>
+</html>

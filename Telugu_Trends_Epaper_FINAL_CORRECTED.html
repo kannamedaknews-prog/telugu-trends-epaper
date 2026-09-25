@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="te">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>తెలుగు ట్రెండ్స్ E-Paper</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;padding:0;background:#eee;color:#161616}
+body{font-family:"Noto Sans Telugu","Nirmala UI",Arial,sans-serif}
+.paper{max-width:1000px;margin:15px auto;background:#fff}
+.head{text-align:center;padding:20px 14px 13px;border-bottom:5px solid #e85b00}
+.logo{font-size:48px;font-weight:800;color:#e85b00;line-height:1.2}.sub{font-size:18px;color:#666}
+.break{display:flex;margin:15px;background:#171717;color:white}.break b{background:#e85b00;padding:10px 16px;white-space:nowrap}.break span{padding:10px 15px;line-height:1.6}
+.tools{text-align:right;padding:0 15px 15px}.tools button,.pdf{background:#e85b00;color:#fff;border:0;border-radius:7px;padding:9px 14px;font:inherit;cursor:pointer}
+#newsList{padding:0 15px 20px}.loading,.error{text-align:center;padding:55px 10px;font-size:22px}
+.story{border-bottom:2px solid #ddd;padding-bottom:28px;margin-bottom:28px}
+.story h2{font-size:30px;line-height:1.45;margin:3px 0 8px}.date{font-size:13px;color:#777;margin-bottom:10px}
+.cover{display:block;width:100%;max-height:520px;object-fit:cover;margin:0 auto 15px}
+.body{font-size:18px;line-height:2;text-align:justify}.body p{margin:0 0 12px}.body img{max-width:100%;height:auto;display:block;margin:10px auto}.body iframe,.body video{max-width:100%}
+.pdf{margin-top:12px}.foot{text-align:center;border-top:4px solid #e85b00;padding:13px;color:#666}
+@media(max-width:600px){.paper{margin:0}.logo{font-size:36px}.sub{font-size:14px}.break{margin:10px}.break b{padding:8px 10px}.break span{font-size:14px}.story h2{font-size:24px}.body{font-size:17px;line-height:1.9}#newsList{padding:0 10px 18px}}
+@media print{@page{size:A4;margin:12mm}body{background:#fff}.paper{max-width:none;margin:0}.tools,.pdf{display:none!important}.body{font-size:13.5pt;line-height:1.75}.story h2{font-size:21pt}.cover{max-height:110mm}}
+</style>
+</head>
+<body>
+<div class="paper">
+  <div class="head">
+    <div class="logo">తెలుగు ట్రెండ్స్</div>
+    <div class="sub">తెలంగాణ • ఆంధ్రప్రదేశ్ • దేశం • ప్రపంచం</div>
+  </div>
+  <div class="break"><b>బ్రేకింగ్ న్యూస్</b><span id="breakingText">తెలుగు ట్రెండ్స్ తాజా వార్తలు</span></div>
+  <div class="tools">
+    <button onclick="window.print()">🖨️ మొత్తం E-Paper PDF</button>
+    <button onclick="location.reload()">↻ Refresh</button>
+  </div>
+  <div id="newsList"><div class="loading">వార్తలు లోడ్ అవుతున్నాయి...</div></div>
+  <div class="foot">తెలుగు ట్రెండ్స్ • తాజా వార్తలు</div>
+</div>
+
+<script type="text/javascript">
+var TT_NEWS=[];
+
+function esc(s){
+ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;")
+ .replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+}
+function titleOf(e){return e&&e.title&&e.title.$t?e.title.$t:"వార్త";}
+function contentOf(e){return e&&e.content&&e.content.$t?e.content.$t:(e&&e.summary&&e.summary.$t?e.summary.$t:"");}
+function dateOf(e){
+ var d=e&&e.published&&e.published.$t?new Date(e.published.$t):new Date();
+ return d.toLocaleDateString("te-IN",{day:"2-digit",month:"long",year:"numeric"});
+}
+function imageOf(c){
+ var d=document.createElement("div");d.innerHTML=c||"";
+ var im=d.querySelector("img");return im?im.getAttribute("src"):"";
+}
+function cleanBody(c){
+ var d=document.createElement("div");d.innerHTML=c||"";
+ d.querySelectorAll("script,style,form").forEach(function(x){x.remove();});
+ var im=d.querySelector("img");if(im)im.remove();
+ return d.innerHTML||"<p>వార్త వివరాలు అందుబాటులో లేవు.</p>";
+}
+
+/* THIS FUNCTION IS DEFINED BEFORE THE BLOGGER FEED SCRIPT BELOW. */
+function teluguTrendsFeed(data){
+ try{
+  var box=document.getElementById("newsList");
+  if(!box)return;
+  if(!data||!data.feed||!data.feed.entry||!data.feed.entry.length){
+   box.innerHTML='<div class="error">వార్తలు అందుబాటులో లేవు.</div>';return;
+  }
+  var entries=data.feed.entry;
+  box.innerHTML="";
+  document.getElementById("breakingText").textContent=titleOf(entries[0]);
+  TT_NEWS=[];
+  for(var i=0;i<entries.length;i++){
+   var c=contentOf(entries[i]), img=imageOf(c), item={
+    title:titleOf(entries[i]),date:dateOf(entries[i]),image:img,body:cleanBody(c)
+   };
+   TT_NEWS.push(item);
+   var a=document.createElement("article");a.className="story";
+   var h='<div class="date">'+esc(item.date)+'</div>';
+   h+='<h2>'+esc(item.title)+'</h2>';
+   if(item.image)h+='<img class="cover" src="'+esc(item.image)+'" alt="">';
+   h+='<div class="body">'+item.body+'</div>';
+   h+='<button class="pdf" onclick="printOne('+i+')">🖨️ ఈ వార్త PDF</button>';
+   a.innerHTML=h;box.appendChild(a);
+  }
+ }catch(e){
+  var box2=document.getElementById("newsList");
+  if(box2)box2.innerHTML='<div class="error">వార్తలు చూపించడంలో సమస్య వచ్చింది.</div>';
+ }
+}
+
+function printOne(i){
+ var n=TT_NEWS[i];if(!n)return;
+ var w=window.open("","_blank");
+ if(!w){alert("Print windowను అనుమతించండి.");return;}
+ w.document.open();
+ w.document.write('<!doctype html><html lang="te"><head><meta charset="utf-8"><title>'+esc(n.title)+'</title><style>@page{size:A4;margin:12mm}body{font-family:"Noto Sans Telugu","Nirmala UI",Arial,sans-serif;color:#111}h1{font-size:23pt;line-height:1.4;border-bottom:3px solid #e85b00;padding-bottom:4mm}.date{color:#666}.hero{max-width:100%;max-height:105mm;display:block;margin:5mm auto}.body{font-size:13.5pt;line-height:1.8;text-align:justify}.body p{margin:0 0 10px}.body img{max-width:100%;height:auto;display:block;margin:10px auto}.end{margin-top:12mm;border-top:2px solid #e85b00;text-align:center;padding-top:3mm;color:#666}</style></head><body>');
+ w.document.write('<h1>'+esc(n.title)+'</h1><div class="date">'+esc(n.date)+'</div>');
+ if(n.image)w.document.write('<img class="hero" src="'+esc(n.image)+'">');
+ w.document.write('<div class="body">'+n.body+'</div><div class="end">తెలుగు ట్రెండ్స్</div>');
+ w.document.write('<script>window.onload=function(){setTimeout(function(){window.print()},700)}<\/script></body></html>');
+ w.document.close();
+}
+</script>
+
+<!-- STATIC JSONP SCRIPT: callback is already defined above. -->
+<script type="text/javascript" src="https://telugutrendsnews2026.blogspot.com/feeds/posts/default?alt=json-in-script&amp;max-results=50&amp;callback=teluguTrendsFeed"></script>
+</body>
+</html>

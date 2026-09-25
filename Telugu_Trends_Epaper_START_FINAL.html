@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="te">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>తెలుగు ట్రెండ్స్ — E-Paper</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:#ededed;color:#171717}
+body{font-family:"Noto Sans Telugu","Nirmala UI",Arial,sans-serif}
+.paper{width:min(100%,1000px);margin:14px auto;background:#fff;box-shadow:0 2px 18px rgba(0,0,0,.12)}
+.mast{text-align:center;padding:22px 18px 14px;border-bottom:5px solid #e85b00}
+.logo{font-size:48px;font-weight:800;line-height:1.2;color:#e85b00}
+.tag{font-size:18px;color:#666;margin-top:4px}
+.breaking{display:flex;margin:15px;overflow:hidden;background:#171717;color:#fff}
+.breaking strong{background:#e85b00;padding:10px 16px;white-space:nowrap}
+.breaking span{padding:10px 15px;line-height:1.6}
+.controls{display:flex;justify-content:flex-end;gap:8px;padding:0 15px 15px}
+.controls button,.pdf,.more{border:0;border-radius:7px;background:#e85b00;color:#fff;padding:9px 14px;font:inherit;cursor:pointer}
+#newsList{padding:0 15px}
+.status{text-align:center;padding:55px 12px;font-size:22px;color:#555}
+.story{padding:0 0 28px;margin:0 0 28px;border-bottom:2px solid #ddd}
+.story:last-child{border-bottom:0}
+.story h2{font-size:30px;line-height:1.45;margin:4px 0 8px}
+.date{font-size:13px;color:#777;margin-bottom:10px}
+.cover{width:100%;max-height:520px;object-fit:cover;display:block;margin:0 auto 15px}
+.body{font-size:18px;line-height:2;text-align:justify}
+.body p{margin:0 0 12px}
+.body img{max-width:100%;height:auto;display:block;margin:12px auto}
+.body iframe,.body video{max-width:100%}
+.pdf{margin-top:12px}
+.morebox{text-align:center;padding:4px 15px 25px}
+.more{font-size:16px}
+.foot{text-align:center;border-top:4px solid #e85b00;padding:13px;color:#666;font-size:13px}
+@media(max-width:650px){
+ .paper{margin:0;width:100%;box-shadow:none}
+ .logo{font-size:36px}.tag{font-size:14px}
+ .breaking{margin:10px}.breaking strong{padding:8px 10px}.breaking span{font-size:14px}
+ #newsList{padding:0 10px}.story h2{font-size:24px}.body{font-size:17px;line-height:1.9}
+ .controls{padding-right:10px}.controls button{font-size:14px}
+}
+@media print{
+ @page{size:A4;margin:12mm}
+ body{background:#fff}.paper{width:100%;margin:0;box-shadow:none}
+ .controls,.pdf,.morebox{display:none!important}
+ .body{font-size:13.5pt;line-height:1.75}.story h2{font-size:21pt}
+ .cover{max-height:110mm}
+}
+</style>
+</head>
+<body>
+<div class="paper">
+<header class="mast">
+  <div class="logo">తెలుగు ట్రెండ్స్</div>
+  <div class="tag">తెలంగాణ • ఆంధ్రప్రదేశ్ • దేశం • ప్రపంచం</div>
+</header>
+
+<div class="breaking">
+  <strong>బ్రేకింగ్ న్యూస్</strong>
+  <span id="breakingText">తెలుగు ట్రెండ్స్ తాజా వార్తలు</span>
+</div>
+
+<div class="controls">
+  <button onclick="window.print()">🖨️ మొత్తం E-Paper PDF</button>
+  <button onclick="location.reload()">↻ Refresh</button>
+</div>
+
+<main id="newsList">
+  <div class="status">వార్తలు లోడ్ అవుతున్నాయి...</div>
+</main>
+
+<div class="morebox" id="moreBox" style="display:none">
+  <button class="more" id="moreBtn" onclick="loadMore()">మరిన్ని వార్తలు</button>
+</div>
+
+<footer class="foot">తెలుగు ట్రెండ్స్ • తాజా వార్తలు</footer>
+</div>
+
+<script>
+/* =========================================================
+   TELUGU TRENDS E-PAPER
+   Small feed batches are intentional: Blogger posts contain
+   full HTML, images and paragraphs, so huge batches can fail.
+   ========================================================= */
+
+var TT={
+  blog:"https://telugutrendsnews2026.blogspot.com",
+  start:1,
+  batch:8,
+  busy:false,
+  finished:false,
+  stories:[]
+};
+
+function esc(v){
+  return String(v==null?"":v)
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;").replace(/"/g,"&quot;")
+    .replace(/'/g,"&#39;");
+}
+
+function titleOf(e){
+  return e && e.title && e.title.$t ? e.title.$t : "వార్త";
+}
+
+function contentOf(e){
+  if(e && e.content && e.content.$t) return e.content.$t;
+  if(e && e.summary && e.summary.$t) return e.summary.$t;
+  return "";
+}
+
+function dateOf(e){
+  var raw=e && e.published && e.published.$t ? e.published.$t : "";
+  if(!raw) return "";
+  var d=new Date(raw);
+  return d.toLocaleDateString("te-IN",{day:"2-digit",month:"long",year:"numeric"});
+}
+
+function imageOf(html){
+  var box=document.createElement("div");
+  box.innerHTML=html||"";
+  var img=box.querySelector("img");
+  return img ? img.getAttribute("src") : "";
+}
+
+function bodyOf(html){
+  var box=document.createElement("div");
+  box.innerHTML=html||"";
+  box.querySelectorAll("script,style,form").forEach(function(x){x.remove();});
+  var first=box.querySelector("img");
+  if(first) first.remove();
+  return box.innerHTML || "<p>వార్త వివరాలు అందుబాటులో లేవు.</p>";
+}
+
+function showError(message){
+  var list=document.getElementById("newsList");
+  if(list && !TT.stories.length)
+    list.innerHTML='<div class="status">'+message+'</div>';
+}
+
+function feedCallback(data){
+  TT.busy=false;
+
+  var list=document.getElementById("newsList");
+  if(!list) return;
+
+  if(!data || !data.feed || !data.feed.entry){
+    if(!TT.stories.length) showError("వార్తలు అందుబాటులో లేవు.");
+    return;
+  }
+
+  var entries=data.feed.entry;
+
+  if(entries.length===0){
+    TT.finished=true;
+    document.getElementById("moreBox").style.display="none";
+    if(!TT.stories.length) showError("వార్తలు అందుబాటులో లేవు.");
+    return;
+  }
+
+  if(TT.start===1){
+    document.getElementById("breakingText").textContent=titleOf(entries[0]);
+  }
+
+  entries.forEach(function(entry){
+    var content=contentOf(entry);
+    var item={
+      title:titleOf(entry),
+      date:dateOf(entry),
+      image:imageOf(content),
+      body:bodyOf(content)
+    };
+
+    var index=TT.stories.length;
+    TT.stories.push(item);
+
+    var article=document.createElement("article");
+    article.className="story";
+
+    var html='<div class="date">'+esc(item.date)+'</div>';
+    html+='<h2>'+esc(item.title)+'</h2>';
+
+    if(item.image){
+      html+='<img class="cover" src="'+esc(item.image)+'" alt="">';
+    }
+
+    html+='<div class="body">'+item.body+'</div>';
+    html+='<button class="pdf" onclick="printStory('+index+')">🖨️ ఈ వార్త PDF</button>';
+
+    article.innerHTML=html;
+    list.appendChild(article);
+  });
+
+  document.getElementById("moreBox").style.display="block";
+  document.getElementById("moreBtn").textContent="మరిన్ని వార్తలు";
+
+  if(entries.length<TT.batch){
+    TT.finished=true;
+    document.getElementById("moreBox").style.display="none";
+  }
+}
+
+function loadFeed(){
+  if(TT.busy || TT.finished) return;
+
+  TT.busy=true;
+  var callback="TT_feed_"+Date.now();
+  var url=TT.blog+
+    "/feeds/posts/default?alt=json-in-script"+
+    "&max-results="+TT.batch+
+    "&start-index="+TT.start+
+    "&orderby=published"+
+    "&callback="+callback;
+
+  window[callback]=function(data){
+    try{feedCallback(data);}
+    finally{
+      try{delete window[callback];}catch(e){window[callback]=null;}
+      if(script.parentNode) script.parentNode.removeChild(script);
+      clearTimeout(timer);
+    }
+  };
+
+  var script=document.createElement("script");
+  script.type="text/javascript";
+  script.src=url;
+
+  var timer=setTimeout(function(){
+    if(TT.busy){
+      TT.busy=false;
+      try{delete window[callback];}catch(e){window[callback]=null;}
+      if(!TT.stories.length){
+        showError("వార్తలు లోడ్ కాలేదు. మరోసారి Refresh చేయండి.");
+      }
+    }
+  },15000);
+
+  document.body.appendChild(script);
+}
+
+function loadMore(){
+  if(TT.busy || TT.finished) return;
+  TT.start += TT.batch;
+  document.getElementById("moreBtn").textContent="లోడ్ అవుతోంది...";
+  loadFeed();
+}
+
+function printStory(i){
+  var n=TT.stories[i];
+  if(!n)return;
+
+  var w=window.open("","_blank");
+  if(!w){
+    alert("Print windowను అనుమతించండి.");
+    return;
+  }
+
+  w.document.open();
+  w.document.write(
+    '<!doctype html><html lang="te"><head><meta charset="utf-8">'+
+    '<title>'+esc(n.title)+'</title>'+
+    '<style>'+
+    '@page{size:A4;margin:12mm}'+
+    'body{font-family:"Noto Sans Telugu","Nirmala UI",Arial,sans-serif;color:#111}'+
+    'h1{font-size:23pt;line-height:1.4;border-bottom:3px solid #e85b00;padding-bottom:4mm}'+
+    '.date{color:#666;font-size:10pt;margin-bottom:4mm}'+
+    '.hero{max-width:100%;max-height:105mm;display:block;margin:5mm auto}'+
+    '.body{font-size:13.5pt;line-height:1.8;text-align:justify}'+
+    '.body p{margin:0 0 10px}.body img{max-width:100%;height:auto;display:block;margin:10px auto}'+
+    '.end{margin-top:12mm;border-top:2px solid #e85b00;text-align:center;padding-top:3mm;color:#666}'+
+    '</style></head><body>'
+  );
+
+  w.document.write('<h1>'+esc(n.title)+'</h1>');
+  w.document.write('<div class="date">'+esc(n.date)+'</div>');
+  if(n.image) w.document.write('<img class="hero" src="'+esc(n.image)+'">');
+  w.document.write('<div class="body">'+n.body+'</div>');
+  w.document.write('<div class="end">తెలుగు ట్రెండ్స్</div>');
+  w.document.write('<script>window.onload=function(){setTimeout(function(){window.print()},700)}<\/script>');
+  w.document.write('</body></html>');
+  w.document.close();
+}
+
+/* Start with only 8 posts. */
+loadFeed();
+</script>
+</body>
+</html>

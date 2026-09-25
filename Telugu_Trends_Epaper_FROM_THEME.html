@@ -1,0 +1,632 @@
+<!doctype html>
+<html lang="te">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>తెలుగు ట్రెండ్స్ E-Paper</title>
+
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:#eeeeee;color:#171717}
+body{font-family:"Noto Sans Telugu","Nirmala UI",Arial,sans-serif}
+
+.tt-paper{
+  width:100%;
+  max-width:1000px;
+  margin:15px auto;
+  background:#fff;
+  box-shadow:0 2px 18px rgba(0,0,0,.12);
+}
+
+.tt-head{
+  text-align:center;
+  padding:22px 18px 14px;
+  border-bottom:5px solid #e85b00;
+}
+.tt-logo{
+  color:#e85b00;
+  font-size:48px;
+  font-weight:800;
+  line-height:1.2;
+}
+.tt-sub{
+  color:#666;
+  font-size:18px;
+  margin-top:4px;
+}
+
+.tt-breaking{
+  display:flex;
+  margin:15px;
+  background:#171717;
+  color:#fff;
+  overflow:hidden;
+}
+.tt-breaking strong{
+  background:#e85b00;
+  padding:10px 16px;
+  white-space:nowrap;
+}
+.tt-breaking span{
+  padding:10px 15px;
+  line-height:1.6;
+}
+
+.tt-tools{
+  display:flex;
+  justify-content:flex-end;
+  gap:8px;
+  padding:0 15px 15px;
+}
+.tt-tools button,.tt-pdf{
+  border:0;
+  border-radius:7px;
+  background:#e85b00;
+  color:#fff;
+  padding:9px 14px;
+  font:inherit;
+  cursor:pointer;
+}
+
+#ttNewsList{padding:0 15px}
+
+.tt-status{
+  text-align:center;
+  padding:55px 12px;
+  font-size:22px;
+  color:#555;
+}
+
+.tt-story{
+  border-bottom:2px solid #ddd;
+  padding:0 0 30px;
+  margin:0 0 30px;
+}
+
+.tt-date{
+  color:#777;
+  font-size:13px;
+  margin-bottom:7px;
+}
+
+.tt-story h2{
+  font-size:30px;
+  line-height:1.45;
+  margin:3px 0 12px;
+}
+
+.tt-cover{
+  display:block;
+  width:100%;
+  max-height:520px;
+  object-fit:cover;
+  margin:0 auto 15px;
+}
+
+.tt-body{
+  font-size:18px;
+  line-height:2;
+  text-align:justify;
+}
+
+.tt-body p{margin:0 0 12px}
+.tt-body img{
+  max-width:100%;
+  height:auto;
+  display:block;
+  margin:12px auto;
+}
+.tt-body iframe,.tt-body video{max-width:100%}
+
+.tt-pdf{margin-top:12px}
+
+.tt-more{
+  text-align:center;
+  padding:0 15px 25px;
+}
+.tt-more button{
+  border:0;
+  border-radius:7px;
+  background:#e85b00;
+  color:#fff;
+  padding:10px 18px;
+  font:inherit;
+  cursor:pointer;
+}
+
+.tt-foot{
+  border-top:4px solid #e85b00;
+  text-align:center;
+  padding:13px;
+  color:#666;
+  font-size:13px;
+}
+
+@media(max-width:650px){
+  .tt-paper{margin:0;box-shadow:none}
+  .tt-logo{font-size:36px}
+  .tt-sub{font-size:14px}
+  .tt-breaking{margin:10px}
+  .tt-breaking strong{padding:8px 10px}
+  .tt-breaking span{font-size:14px}
+  #ttNewsList{padding:0 10px}
+  .tt-story h2{font-size:24px}
+  .tt-body{font-size:17px;line-height:1.9}
+  .tt-tools{padding-right:10px}
+  .tt-tools button{font-size:14px}
+}
+
+@media print{
+  @page{size:A4;margin:12mm}
+  body{background:#fff}
+  .tt-paper{width:100%;max-width:none;margin:0;box-shadow:none}
+  .tt-tools,.tt-pdf,.tt-more{display:none!important}
+  .tt-story h2{font-size:21pt}
+  .tt-body{font-size:13.5pt;line-height:1.75}
+  .tt-cover{max-height:110mm}
+}
+</style>
+</head>
+
+<body>
+
+<div class="tt-paper">
+
+  <header class="tt-head">
+    <div class="tt-logo">తెలుగు ట్రెండ్స్</div>
+    <div class="tt-sub">తెలంగాణ • ఆంధ్రప్రదేశ్ • దేశం • ప్రపంచం</div>
+  </header>
+
+  <div class="tt-breaking">
+    <strong>బ్రేకింగ్ న్యూస్</strong>
+    <span id="ttBreakingText">తెలుగు ట్రెండ్స్ తాజా వార్తలు</span>
+  </div>
+
+  <div class="tt-tools">
+    <button onclick="window.print()">🖨️ మొత్తం E-Paper PDF</button>
+    <button onclick="location.reload()">↻ Refresh</button>
+  </div>
+
+  <main id="ttNewsList">
+    <div class="tt-status">వార్తలు లోడ్ అవుతున్నాయి...</div>
+  </main>
+
+  <div class="tt-more" id="ttMoreBox" style="display:none">
+    <button id="ttMoreBtn" onclick="TTLoadMore()">మరిన్ని వార్తలు</button>
+  </div>
+
+  <footer class="tt-foot">తెలుగు ట్రెండ్స్ • తాజా వార్తలు</footer>
+
+</div>
+
+<script type="text/javascript">
+// This theme already loads jQuery 3.7.1 in the <head>.
+// We deliberately use the same Blogger JSONP method already used
+// by this theme's own widgets: $.ajax + dataType:"jsonp".
+
+(function(){
+
+  var TT = {
+    start: 1,
+    batch: 8,
+    loading: false,
+    finished: false,
+    stories: []
+  };
+
+  function esc(value){
+    return String(value == null ? "" : value)
+      .replace(/&/g,"&amp;")
+      .replace(/</g,"&lt;")
+      .replace(/>/g,"&gt;")
+      .replace(/"/g,"&quot;")
+      .replace(/'/g,"&#39;");
+  }
+
+  function getTitle(entry){
+    return entry && entry.title && entry.title.$t
+      ? entry.title.$t
+      : "వార్త";
+  }
+
+  function getContent(entry){
+    if(entry && entry.content && entry.content.$t){
+      return entry.content.$t;
+    }
+    if(entry && entry.summary && entry.summary.$t){
+      return entry.summary.$t;
+    }
+    return "";
+  }
+
+  function getDate(entry){
+    var raw = entry && entry.published && entry.published.$t
+      ? entry.published.$t
+      : "";
+
+    if(!raw){ return ""; }
+
+    var d = new Date(raw);
+
+    return d.toLocaleDateString("te-IN",{
+      day:"2-digit",
+      month:"long",
+      year:"numeric"
+    });
+  }
+
+  function getImage(html){
+    var box = document.createElement("div");
+    box.innerHTML = html || "";
+
+    var image = box.querySelector("img");
+
+    return image ? image.getAttribute("src") : "";
+  }
+
+  function getBody(html){
+    var box = document.createElement("div");
+    box.innerHTML = html || "";
+
+    box.querySelectorAll("script,style,form").forEach(function(node){
+      node.remove();
+    });
+
+    var firstImage = box.querySelector("img");
+
+    if(firstImage){
+      firstImage.remove();
+    }
+
+    return box.innerHTML ||
+      "<p>వార్త వివరాలు అందుబాటులో లేవు.</p>";
+  }
+
+  function renderEntries(entries){
+
+    var list = document.getElementById("ttNewsList");
+
+    if(!list){ return; }
+
+    if(!entries || !entries.length){
+
+      if(!TT.stories.length){
+        list.innerHTML =
+          '<div class="tt-status">వార్తలు అందుబాటులో లేవు.</div>';
+      }
+
+      TT.finished = true;
+      document.getElementById("ttMoreBox").style.display = "none";
+
+      return;
+    }
+
+    if(TT.start === 1){
+
+      document.getElementById("ttBreakingText").textContent =
+        getTitle(entries[0]);
+
+    }
+
+    entries.forEach(function(entry){
+
+      var content = getContent(entry);
+
+      var item = {
+        title: getTitle(entry),
+        date: getDate(entry),
+        image: getImage(content),
+        body: getBody(content)
+      };
+
+      var index = TT.stories.length;
+
+      TT.stories.push(item);
+
+      var article = document.createElement("article");
+
+      article.className = "tt-story";
+
+      var html = "";
+
+      html +=
+        '<div class="tt-date">' +
+        esc(item.date) +
+        '</div>';
+
+      html +=
+        '<h2>' +
+        esc(item.title) +
+        '</h2>';
+
+      if(item.image){
+
+        html +=
+          '<img class="tt-cover" src="' +
+          esc(item.image) +
+          '" alt="">';
+
+      }
+
+      html +=
+        '<div class="tt-body">' +
+        item.body +
+        '</div>';
+
+      html +=
+        '<button class="tt-pdf" onclick="TTPrintStory(' +
+        index +
+        ')">🖨️ ఈ వార్త PDF</button>';
+
+      article.innerHTML = html;
+
+      list.appendChild(article);
+
+    });
+
+    TT.loading = false;
+
+    if(entries.length < TT.batch){
+
+      TT.finished = true;
+
+      document.getElementById("ttMoreBox").style.display = "none";
+
+    }else{
+
+      document.getElementById("ttMoreBox").style.display = "block";
+
+      document.getElementById("ttMoreBtn").textContent =
+        "మరిన్ని వార్తలు";
+
+    }
+
+  }
+
+  function load(){
+
+    if(TT.loading || TT.finished){ return; }
+
+    TT.loading = true;
+
+    document.getElementById("ttMoreBtn").textContent =
+      "వార్తలు లోడ్ అవుతున్నాయి...";
+
+    /*
+      IMPORTANT:
+      Use a RELATIVE Blogger feed URL.
+      The existing theme itself uses this exact approach,
+      so it automatically follows the current Blogger domain.
+    */
+
+    var feedUrl =
+      "/feeds/posts/default" +
+      "?alt=json-in-script" +
+      "&max-results=" + TT.batch +
+      "&start-index=" + TT.start;
+
+    $.ajax({
+
+      type: "GET",
+
+      url: feedUrl,
+
+      cache: false,
+
+      dataType: "jsonp",
+
+      success: function(data){
+
+        TT.loading = false;
+
+        if(!data || !data.feed){
+
+          showError("వార్తల feed అందుబాటులో లేదు.");
+
+          return;
+        }
+
+        renderEntries(data.feed.entry || []);
+
+      },
+
+      error: function(){
+
+        TT.loading = false;
+
+        if(!TT.stories.length){
+
+          showError(
+            "వార్తలు లోడ్ కాలేదు. Refresh చేయండి."
+          );
+
+        }else{
+
+          document.getElementById("ttMoreBtn").textContent =
+            "మళ్లీ ప్రయత్నించండి";
+
+        }
+
+      }
+
+    });
+
+  }
+
+  function showError(message){
+
+    var list = document.getElementById("ttNewsList");
+
+    if(list){
+
+      list.innerHTML =
+        '<div class="tt-status">' +
+        message +
+        '</div>';
+
+    }
+
+    document.getElementById("ttMoreBox").style.display = "none";
+
+  }
+
+  window.TTLoadMore = function(){
+
+    if(TT.loading || TT.finished){ return; }
+
+    TT.start += TT.batch;
+
+    load();
+
+  };
+
+  window.TTPrintStory = function(index){
+
+    var item = TT.stories[index];
+
+    if(!item){ return; }
+
+    var win = window.open("","_blank");
+
+    if(!win){
+
+      alert("Print windowను అనుమతించండి.");
+
+      return;
+
+    }
+
+    win.document.open();
+
+    win.document.write(
+      '<!doctype html>' +
+      '<html lang="te">' +
+      '<head>' +
+      '<meta charset="utf-8">' +
+      '<title>' + esc(item.title) + '</title>' +
+
+      '<style>' +
+
+      '@page{size:A4;margin:12mm}' +
+
+      'body{' +
+      'font-family:"Noto Sans Telugu","Nirmala UI",Arial,sans-serif;' +
+      'color:#111' +
+      '}' +
+
+      'h1{' +
+      'font-size:23pt;' +
+      'line-height:1.4;' +
+      'border-bottom:3px solid #e85b00;' +
+      'padding-bottom:4mm' +
+      '}' +
+
+      '.date{color:#666;font-size:10pt;margin-bottom:4mm}' +
+
+      '.hero{' +
+      'max-width:100%;' +
+      'max-height:105mm;' +
+      'display:block;' +
+      'margin:5mm auto' +
+      '}' +
+
+      '.body{' +
+      'font-size:13.5pt;' +
+      'line-height:1.8;' +
+      'text-align:justify' +
+      '}' +
+
+      '.body p{margin:0 0 10px}' +
+
+      '.body img{' +
+      'max-width:100%;' +
+      'height:auto;' +
+      'display:block;' +
+      'margin:10px auto' +
+      '}' +
+
+      '.end{' +
+      'margin-top:12mm;' +
+      'border-top:2px solid #e85b00;' +
+      'text-align:center;' +
+      'padding-top:3mm;' +
+      'color:#666' +
+      '}' +
+
+      '</style>' +
+      '</head>' +
+      '<body>'
+    );
+
+    win.document.write(
+      '<h1>' +
+      esc(item.title) +
+      '</h1>'
+    );
+
+    win.document.write(
+      '<div class="date">' +
+      esc(item.date) +
+      '</div>'
+    );
+
+    if(item.image){
+
+      win.document.write(
+        '<img class="hero" src="' +
+        esc(item.image) +
+        '">'
+      );
+
+    }
+
+    win.document.write(
+      '<div class="body">' +
+      item.body +
+      '</div>'
+    );
+
+    win.document.write(
+      '<div class="end">తెలుగు ట్రెండ్స్</div>'
+    );
+
+    win.document.write(
+      '<script>' +
+      'window.onload=function(){' +
+      'setTimeout(function(){window.print()},700)' +
+      '}<\/script>'
+    );
+
+    win.document.write("</body></html>");
+
+    win.document.close();
+
+  };
+
+  /*
+    Wait until the theme's jQuery is ready.
+    This is important because the theme itself loads jQuery
+    in the head and uses $.ajax for its own news widgets.
+  */
+
+  function start(){
+
+    if(window.jQuery){
+
+      load();
+
+      return;
+
+    }
+
+    setTimeout(start,100);
+
+  }
+
+  start();
+
+})();
+</script>
+
+</body>
+</html>

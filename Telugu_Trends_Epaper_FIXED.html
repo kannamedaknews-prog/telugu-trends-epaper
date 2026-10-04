@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="te">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>తెలుగు ట్రెండ్స్ — E-Paper</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#222;color:#111;font-family:"Noto Sans Telugu","Nirmala UI",Arial,sans-serif}
+.toolbar{position:sticky;top:0;z-index:20;background:#111;color:#fff;padding:9px;display:flex;gap:7px;justify-content:center;align-items:center;flex-wrap:wrap}
+.toolbar button{border:0;border-radius:6px;padding:8px 12px;font-weight:700;cursor:pointer}
+.toolbar .brand{font-size:18px;font-weight:800;margin-right:8px}
+.paper{width:min(100%,900px);margin:16px auto;background:#fff;box-shadow:0 8px 35px #000}
+.masthead{padding:12px 16px 8px;border-bottom:3px solid #111}
+.logo{font-size:42px;font-weight:900;text-align:center;letter-spacing:.5px}
+.meta{display:flex;justify-content:space-between;gap:10px;border-top:1px solid #111;padding-top:5px;font-size:12px}
+.breaking{background:#111;color:#fff;padding:7px 10px;font-weight:800;white-space:nowrap;overflow:hidden}
+.breaking span{display:inline-block;animation:ticker 22s linear infinite}
+@keyframes ticker{from{transform:translateX(100%)}to{transform:translateX(-100%)}}
+.content{padding:10px 12px}
+.status{text-align:center;padding:18px;color:#666}
+.lead{display:grid;grid-template-columns:2fr 1fr;gap:10px;border-bottom:2px solid #111;padding-bottom:10px}
+.lead-main{border-right:1px solid #777;padding-right:10px}
+.lead h1{font-size:30px;line-height:1.15;margin:0 0 8px}
+.lead-main img{width:100%;max-height:300px;object-fit:cover;display:block;margin-bottom:7px}
+.story-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}
+.story{border-bottom:1px solid #555;padding-bottom:8px}
+.story img{width:100%;height:115px;object-fit:cover;display:block;margin-bottom:5px}
+.story h2{font-size:18px;line-height:1.2;margin:0 0 4px}
+.story p,.lead p{font-size:13px;line-height:1.45;margin:4px 0}
+.side-story{border-bottom:1px solid #555;padding:0 0 8px;margin-bottom:8px}
+.side-story h2{font-size:18px;line-height:1.2;margin:0 0 4px}
+.side-story img{width:100%;height:100px;object-fit:cover;display:block;margin-bottom:5px}
+.category{font-size:11px;font-weight:800;text-transform:uppercase}
+.footer{border-top:2px solid #111;padding:8px 12px;text-align:center;font-size:11px}
+a{color:inherit;text-decoration:none}
+@media(max-width:650px){
+ .toolbar{position:fixed;bottom:0;top:auto;width:100%;padding:7px}
+ .toolbar .brand{width:100%;text-align:center}
+ .paper{margin:0 auto 90px;width:100%;box-shadow:none}
+ .logo{font-size:31px}
+ .lead{grid-template-columns:1fr}
+ .lead-main{border-right:0;border-bottom:1px solid #777;padding-right:0;padding-bottom:10px}
+ .lead h1{font-size:25px}
+ .story-grid{grid-template-columns:1fr 1fr}
+ .story h2,.side-story h2{font-size:16px}
+ .story img{height:100px}
+}
+@media(max-width:420px){.story-grid{grid-template-columns:1fr}}
+@media print{
+ body{background:#fff}
+ .toolbar{display:none}
+ .paper{width:100%;margin:0;box-shadow:none}
+ .breaking span{animation:none}
+ @page{size:A4;margin:8mm}
+}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <div class="brand">📰 తెలుగు ట్రెండ్స్ E-Paper</div>
+  <button onclick="loadNews()">↻ Refresh</button>
+  <button onclick="window.print()">🖨 Print / PDF</button>
+</div>
+
+<main class="paper">
+  <header class="masthead">
+    <div class="logo">తెలుగు ట్రెండ్స్</div>
+    <div class="meta">
+      <span id="date"></span>
+      <span>తెలుగు ట్రెండ్స్ E-Paper</span>
+      <span>www.telugutrendsnews.com</span>
+    </div>
+  </header>
+
+  <div class="breaking">BREAKING NEWS: <span id="ticker">తాజా వార్తలు లోడ్ అవుతున్నాయి...</span></div>
+
+  <section class="content">
+    <div id="status" class="status">వార్తలు లోడ్ అవుతున్నాయి...</div>
+    <div id="paperContent" style="display:none">
+      <section class="lead">
+        <article class="lead-main" id="leadMain"></article>
+        <aside id="sideNews"></aside>
+      </section>
+      <section class="story-grid" id="storyGrid"></section>
+    </div>
+  </section>
+
+  <footer class="footer">
+    © తెలుగు ట్రెండ్స్ — అన్ని హక్కులు ప్రత్యేకించబడినవి
+  </footer>
+</main>
+
+<script>
+/*
+  FIXED VERSION
+  సమస్యకు కారణం: custom-domain E-Paper నుంచి blogspot feed ను fetch()
+  చేయడం వల్ల కొన్ని సందర్భాల్లో CORS వల్ల వార్తలు లోడ్ కావడం లేదు.
+  అందుకే Blogger JSONP feed ఉపయోగిస్తున్నాం.
+*/
+const BLOG_URL = "https://www.telugutrendsnews.com";
+const FALLBACK_BLOG_URL = "https://telugutrendsnews2026.blogspot.com";
+const MAX_POSTS = 12;
+
+document.getElementById("date").textContent =
+  new Date().toLocaleDateString("te-IN",{day:"2-digit",month:"long",year:"numeric"});
+
+function cleanText(html){
+  const d=document.createElement("div");
+  d.innerHTML=html||"";
+  return (d.textContent||d.innerText||"").replace(/\s+/g," ").trim();
+}
+
+function getImage(html){
+  const d=document.createElement("div");
+  d.innerHTML=html||"";
+  const img=d.querySelector("img");
+  return img ? (img.getAttribute("data-src") || img.src) : "";
+}
+
+function escapeHTML(s){
+  return String(s||"").replace(/[&<>"']/g,m=>({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+  }[m]));
+}
+
+function postLink(p){
+  return (p.link||[]).find(x=>x.rel==="alternate")?.href || "#";
+}
+
+function labelOf(p){
+  return (p.category||[])[0]?.term || "News";
+}
+
+function render(posts){
+  const status=document.getElementById("status");
+  const box=document.getElementById("paperContent");
+
+  if(!posts.length){
+    status.textContent="వార్తలు కనిపించలేదు.";
+    return;
+  }
+
+  status.style.display="none";
+  box.style.display="block";
+
+  const lead=posts[0];
+  const leadTitle=escapeHTML(lead.title?.$t||"");
+  const leadText=escapeHTML(cleanText(lead.content?.$t||lead.summary?.$t||"").slice(0,420));
+  const leadImg=getImage(lead.content?.$t||"");
+  const leadHref=postLink(lead);
+  const leadCat=escapeHTML(labelOf(lead));
+
+  document.getElementById("leadMain").innerHTML=`
+    <div class="category">${leadCat}</div>
+    <a href="${leadHref}" target="_blank" rel="noopener">
+      <h1>${leadTitle}</h1>
+      ${leadImg?`<img src="${leadImg}" alt="">`:""}
+      <p>${leadText}</p>
+    </a>`;
+
+  document.getElementById("sideNews").innerHTML=posts.slice(1,4).map(p=>{
+    const title=escapeHTML(p.title?.$t||"");
+    const text=escapeHTML(cleanText(p.content?.$t||p.summary?.$t||"").slice(0,180));
+    const img=getImage(p.content?.$t||"");
+    return `<article class="side-story">
+      <div class="category">${escapeHTML(labelOf(p))}</div>
+      <a href="${postLink(p)}" target="_blank" rel="noopener">
+        ${img?`<img src="${img}" alt="">`:""}
+        <h2>${title}</h2>
+        <p>${text}</p>
+      </a>
+    </article>`;
+  }).join("");
+
+  document.getElementById("storyGrid").innerHTML=posts.slice(4).map(p=>{
+    const title=escapeHTML(p.title?.$t||"");
+    const text=escapeHTML(cleanText(p.content?.$t||p.summary?.$t||"").slice(0,220));
+    const img=getImage(p.content?.$t||"");
+    return `<article class="story">
+      <div class="category">${escapeHTML(labelOf(p))}</div>
+      <a href="${postLink(p)}" target="_blank" rel="noopener">
+        ${img?`<img src="${img}" alt="">`:""}
+        <h2>${title}</h2>
+        <p>${text}</p>
+      </a>
+    </article>`;
+  }).join("");
+
+  document.getElementById("ticker").textContent =
+    posts.slice(0,6).map(p=>p.title?.$t||"").join("  •  ");
+}
+
+let jsonpCounter=0;
+
+function loadFrom(url){
+  return new Promise((resolve,reject)=>{
+    const callback="teluguTrendsFeed_"+(++jsonpCounter);
+    const script=document.createElement("script");
+    let finished=false;
+
+    const cleanup=()=>{
+      try{delete window[callback]}catch(e){window[callback]=undefined}
+      script.remove();
+    };
+
+    const timer=setTimeout(()=>{
+      if(finished)return;
+      finished=true;
+      cleanup();
+      reject(new Error("Feed timeout"));
+    },10000);
+
+    window[callback]=data=>{
+      if(finished)return;
+      finished=true;
+      clearTimeout(timer);
+      cleanup();
+      resolve(data?.feed?.entry||[]);
+    };
+
+    script.onerror=()=>{
+      if(finished)return;
+      finished=true;
+      clearTimeout(timer);
+      cleanup();
+      reject(new Error("Feed error"));
+    };
+
+    script.src=url.replace(/\/$/,"")+
+      "/feeds/posts/default?alt=json-in-script&callback="+
+      callback+"&max-results="+MAX_POSTS+"&orderby=published";
+
+    document.body.appendChild(script);
+  });
+}
+
+async function loadNews(){
+  const status=document.getElementById("status");
+  status.style.display="block";
+  status.textContent="వార్తలు లోడ్ అవుతున్నాయి...";
+  document.getElementById("paperContent").style.display="none";
+
+  try{
+    let posts=[];
+    try{
+      posts=await loadFrom(BLOG_URL);
+    }catch(e){
+      posts=await loadFrom(FALLBACK_BLOG_URL);
+    }
+    render(posts);
+  }catch(e){
+    status.innerHTML=
+      "వార్తలు లోడ్ కాలేదు.<br><small>Refresh నొక్కి మళ్లీ ప్రయత్నించండి.</small>";
+    console.error(e);
+  }
+}
+
+loadNews();
+</script>
+</body>
+</html>

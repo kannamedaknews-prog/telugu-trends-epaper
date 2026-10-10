@@ -1,0 +1,252 @@
+<div id="ttApp" style="max-width:700px;margin:20px auto;padding:15px;font-family:Arial,sans-serif;color:#222">
+  <section id="loginBox" style="padding:24px;border-radius:16px;box-shadow:0 3px 15px #0002">
+    <h2 style="text-align:center;color:#c00">📰 తెలుగు ట్రెండ్స్</h2>
+    <h3 style="text-align:center">రిపోర్టర్ లాగిన్</h3>
+    <label>Reporter ID</label>
+    <input id="reporterId" placeholder="ఉదా: TT001" style="width:100%;box-sizing:border-box;padding:13px;margin:8px 0 16px">
+    <label>Password / PIN</label>
+    <input id="reporterPassword" type="password" placeholder="Password" style="width:100%;box-sizing:border-box;padding:13px;margin:8px 0 16px">
+    <button id="loginBtn" style="width:100%;padding:14px;background:#c00;color:white;border:0;border-radius:8px;font-size:18px">LOGIN</button>
+    <p id="loginMessage" role="status"></p>
+  </section>
+
+  <section id="dashboard" style="display:none;padding:20px">
+    <h2 style="color:#c00;text-align:center">Reporter Dashboard</h2>
+    <p id="welcome"></p>
+    <button id="newBtn" style="padding:12px;background:#c00;color:white;border:0;border-radius:8px">📝 కొత్త వార్త</button>
+    <button id="mineBtn" style="padding:12px">📰 నా వార్తలు</button>
+    <button id="logoutBtn" style="padding:12px">Logout</button>
+    <div id="panel" style="margin-top:20px"></div>
+  </section>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-storage-compat.js"></script>
+
+<script>
+(function () {
+  'use strict';
+  var cfg = {
+    apiKey: 'AIzaSyAlKstSb3srQXW2UjoDcE-4nF_9eogE9qw',
+    authDomain: 'telugu-trends-news.firebaseapp.com',
+    projectId: 'telugu-trends-news',
+    storageBucket: 'telugu-trends-news.firebasestorage.app',
+    messagingSenderId: '92780017343',
+    appId: '1:92780017343:web:82f0590564ec8104bb380a'
+  };
+  var emails = { TT001: 'vikasinews+tt001@gmail.com' };
+  var auth = null, db = null, storage = null, activeId = '';
+
+  function el(id) { return document.getElementById(id); }
+  function showMessage(id, text, color) {
+    var target = el(id);
+    if (!target) return;
+    target.textContent = text;
+    target.style.color = color || '#222';
+  }
+
+  try {
+    if (!window.firebase) throw new Error('Firebase SDK లోడ్ కాలేదు. పేజీని మళ్లీ తెరవండి.');
+    if (!firebase.apps.length) firebase.initializeApp(cfg);
+    auth = firebase.auth();
+    db = firebase.firestore();
+    storage = firebase.storage();
+  } catch (err) {
+    showMessage('loginMessage', 'Firebase ప్రారంభం కాలేదు: ' + err.message, 'red');
+  }
+
+  function openDashboard() {
+    el('loginBox').style.display = 'none';
+    el('dashboard').style.display = 'block';
+    el('welcome').textContent = 'స్వాగతం ' + activeId;
+    el('panel').innerHTML = '';
+  }
+
+  el('loginBtn').addEventListener('click', function () {
+    var id = el('reporterId').value.trim().toUpperCase();
+    var pw = el('reporterPassword').value;
+    if (!id || !pw) {
+      showMessage('loginMessage', 'Reporter ID, Password నమోదు చేయండి.', 'red');
+      return;
+    }
+    if (!emails[id]) {
+      showMessage('loginMessage', 'ఈ Reporter ID నమోదు కాలేదు.', 'red');
+      return;
+    }
+    if (!auth) {
+      showMessage('loginMessage', 'Firebase ప్రారంభం కాలేదు. పేజీ HTML తనిఖీ చేయాలి.', 'red');
+      return;
+    }
+    showMessage('loginMessage', 'లాగిన్ అవుతోంది...');
+    auth.signInWithEmailAndPassword(emails[id], pw).then(function () {
+      activeId = id;
+      openDashboard();
+    }).catch(function (err) {
+      console.error(err);
+      showMessage('loginMessage', 'లాగిన్ కాలేదు: ' + (err.code || err.message), 'red');
+    });
+  });
+
+  el('newBtn').addEventListener('click', function () {
+    el('panel').innerHTML = `
+      <div style="border:1px solid #ddd;border-radius:12px;padding:16px">
+        <h3 style="color:#c00">📝 కొత్త వార్త పంపండి</h3>
+        <label>వార్త శీర్షిక *</label>
+        <input id="nTitle" style="width:100%;box-sizing:border-box;padding:12px;margin:8px 0 14px">
+        <label>జిల్లా *</label>
+        <input id="nDistrict" placeholder="ఉదా: మెదక్" style="width:100%;box-sizing:border-box;padding:12px;margin:8px 0 14px">
+        <label>మండలం *</label>
+        <input id="nMandal" style="width:100%;box-sizing:border-box;padding:12px;margin:8px 0 14px">
+        <label>గ్రామం / పట్టణం</label>
+        <input id="nVillage" style="width:100%;box-sizing:border-box;padding:12px;margin:8px 0 14px">
+        <label>వార్త వివరాలు *</label>
+        <textarea id="nContent" rows="8" style="width:100%;box-sizing:border-box;padding:12px;margin:8px 0 14px"></textarea>
+        <label>ఫోటో — కెమెరా లేదా గ్యాలరీ</label>
+        <input id="nPhotoFile" type="file" accept="image/*" style="display:block;width:100%;margin:12px 0">
+        <img id="photoPreview" alt="ఎంచుకున్న ఫోటో" style="display:none;max-width:100%;max-height:300px;margin:10px 0">
+        <label>వీడియో URL (ఉంటే)</label>
+        <input id="nVideo" placeholder="YouTube లింక్" style="width:100%;box-sizing:border-box;padding:12px;margin:8px 0 14px">
+        <button id="sendNews" style="width:100%;padding:14px;background:#c00;color:white;border:0;border-radius:8px;font-size:17px">📨 వార్త పంపండి</button>
+        <p id="sendMsg" role="status"></p>
+      </div>`;
+
+    el('nPhotoFile').addEventListener('change', function () {
+      var file = this.files && this.files[0], preview = el('photoPreview');
+      if (!file) {
+        preview.style.display = 'none';
+        preview.removeAttribute('src');
+        return;
+      }
+      if (!file.type.startsWith('image/')) {
+        showMessage('sendMsg', 'ఫోటో ఫైల్‌ను మాత్రమే ఎంచుకోండి.', 'red');
+        this.value = '';
+        return;
+      }
+      preview.src = URL.createObjectURL(file);
+      preview.style.display = 'block';
+    });
+
+    el('sendNews').addEventListener('click', function () {
+      var title = el('nTitle').value.trim();
+      var district = el('nDistrict').value.trim();
+      var mandal = el('nMandal').value.trim();
+      var content = el('nContent').value.trim();
+      var file = el('nPhotoFile').files[0];
+      var user = auth && auth.currentUser;
+
+      if (!title || !district || !mandal || !content) {
+        showMessage('sendMsg', 'శీర్షిక, జిల్లా, మండలం, వార్త వివరాలు తప్పనిసరి.', 'red');
+        return;
+      }
+      if (!user) {
+        showMessage('sendMsg', 'మళ్లీ లాగిన్ చేయండి.', 'red');
+        return;
+      }
+      if (!db || !storage) {
+        showMessage('sendMsg', 'Firebase Firestore/Storage ప్రారంభం కాలేదు.', 'red');
+        return;
+      }
+      if (file && file.size > 5 * 1024 * 1024) {
+        showMessage('sendMsg', 'ఫోటో 5 MB కంటే తక్కువగా ఉండాలి.', 'red');
+        return;
+      }
+
+      el('sendNews').disabled = true;
+      showMessage('sendMsg', 'వార్త సేవ్ అవుతోంది...');
+      var upload = Promise.resolve('');
+      if (file) {
+        var path = 'reporterPhotos/' + user.uid + '/' + Date.now() + '_' +
+          file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+        upload = storage.ref(path).put(file).then(function (snapshot) {
+          return snapshot.ref.getDownloadURL();
+        });
+      }
+      upload.then(function (photoUrl) {
+        return db.collection('News').add({
+          reporterUid: user.uid,
+          reporterId: activeId,
+          title: title,
+          district: district,
+          mandal: mandal,
+          village: el('nVillage').value.trim(),
+          content: content,
+          photoUrl: photoUrl,
+          videoUrl: el('nVideo').value.trim(),
+          status: 'pending',
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      }).then(function () {
+        showMessage('sendMsg', 'వార్త సమర్పించబడింది. అడ్మిన్ ఆమోదం కోసం వేచి ఉండండి.', 'green');
+        el('nTitle').value = '';
+        el('nDistrict').value = '';
+        el('nMandal').value = '';
+        el('nVillage').value = '';
+        el('nContent').value = '';
+        el('nVideo').value = '';
+        el('nPhotoFile').value = '';
+        el('photoPreview').style.display = 'none';
+      }).catch(function (err) {
+        console.error(err);
+        showMessage('sendMsg', 'సేవ్ కాలేదు: ' + (err.code || err.message) +
+          '. Firebase Storage/Firestore Rules తనిఖీ చేయాలి.', 'red');
+      }).finally(function () {
+        el('sendNews').disabled = false;
+      });
+    });
+  });
+
+  el('mineBtn').addEventListener('click', function () {
+    el('panel').innerHTML = '<h3>📰 నా వార్తలు</h3><p id="mineStatus">లోడ్ అవుతోంది...</p><div id="mineList"></div>';
+    var user = auth && auth.currentUser;
+    if (!user) {
+      showMessage('mineStatus', 'మళ్లీ లాగిన్ చేయండి.', 'red');
+      return;
+    }
+    db.collection('News').where('reporterUid', '==', user.uid).get().then(function (snapshot) {
+      var list = el('mineList');
+      if (snapshot.empty) {
+        showMessage('mineStatus', 'ఇంకా వార్తలు పంపలేదు.');
+        return;
+      }
+      showMessage('mineStatus', 'మీరు పంపిన వార్తలు: ' + snapshot.size);
+      snapshot.forEach(function (doc) {
+        var d = doc.data(), article = document.createElement('article');
+        article.style.cssText = 'padding:12px;margin:10px 0;border:1px solid #ddd;border-radius:8px';
+        var heading = document.createElement('h4');
+        heading.textContent = d.title || 'శీర్షిక లేదు';
+        var status = document.createElement('p');
+        status.textContent = 'స్థితి: ' + (d.status || 'pending');
+        article.appendChild(heading);
+        article.appendChild(status);
+        if (d.photoUrl) {
+          var img = document.createElement('img');
+          img.src = d.photoUrl;
+          img.alt = 'వార్త ఫోటో';
+          img.style.maxWidth = '100%';
+          article.appendChild(img);
+        }
+        list.appendChild(article);
+      });
+    }).catch(function (err) {
+      console.error(err);
+      showMessage('mineStatus', 'వార్తలు లోడ్ కాలేదు: ' + (err.code || err.message), 'red');
+    });
+  });
+
+  el('logoutBtn').addEventListener('click', function () {
+    if (!auth) return;
+    auth.signOut().then(function () {
+      activeId = '';
+      el('reporterPassword').value = '';
+      el('dashboard').style.display = 'none';
+      el('loginBox').style.display = 'block';
+      el('panel').innerHTML = '';
+      showMessage('loginMessage', 'Logout అయ్యారు.', 'green');
+    }).catch(function (err) {
+      showMessage('loginMessage', 'Logout కాలేదు: ' + err.message, 'red');
+    });
+  });
+})();
+</script>
